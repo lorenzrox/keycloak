@@ -21,7 +21,11 @@
     <parent>
         <groupId>org.keycloak.testsuite</groupId>
         <artifactId>integration-arquillian-servers-app-server-tomcat</artifactId>
+<<<<<<< HEAD
         <version>15.0.3</version>
+=======
+        <version>15.1.1</version>
+>>>>>>> 6bfd4549bb1e9a17791849252e1de0d95a9f4012
     </parent>
     <modelVersion>4.0.0</modelVersion>
 

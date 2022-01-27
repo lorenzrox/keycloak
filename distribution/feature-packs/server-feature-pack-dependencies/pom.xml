@@ -19,7 +19,11 @@
     <parent>
         <groupId>org.keycloak</groupId>
         <artifactId>feature-packs-parent</artifactId>
+<<<<<<< HEAD
         <version>15.0.3</version>
+=======
+        <version>15.1.1</version>
+>>>>>>> 6bfd4549bb1e9a17791849252e1de0d95a9f4012
         <relativePath>../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -193,6 +197,16 @@
         <dependency>
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-model-map</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.keycloak</groupId>
+            <artifactId>keycloak-model-map-hot-rod</artifactId>
             <exclusions>
                 <exclusion>
                     <groupId>*</groupId>

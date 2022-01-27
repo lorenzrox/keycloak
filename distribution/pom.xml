@@ -20,7 +20,11 @@
     <parent>
         <artifactId>keycloak-parent</artifactId>
         <groupId>org.keycloak</groupId>
+<<<<<<< HEAD
         <version>15.0.3</version>
+=======
+        <version>15.1.1</version>
+>>>>>>> 6bfd4549bb1e9a17791849252e1de0d95a9f4012
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -78,8 +82,9 @@
             </modules>
         </profile>
         <profile>
-            <id>community</id>
+            <id>quarkus</id>
             <activation>
+                <jdk>[11,)</jdk>
                 <property>
                     <name>!product</name>
                 </property>
@@ -92,7 +97,6 @@
             <id>distribution-downloads</id>
             <modules>
                 <module>api-docs-dist</module>
-                <module>examples-dist</module>
                 <module>downloads</module>
             </modules>
         </profile>

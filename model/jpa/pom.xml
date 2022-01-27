@@ -21,7 +21,11 @@
     <parent>
         <artifactId>keycloak-model-pom</artifactId>
         <groupId>org.keycloak</groupId>
+<<<<<<< HEAD
         <version>15.0.3</version>
+=======
+        <version>15.1.1</version>
+>>>>>>> 6bfd4549bb1e9a17791849252e1de0d95a9f4012
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -102,7 +106,7 @@
         </dependency>
         <dependency>
             <groupId>org.hamcrest</groupId>
-            <artifactId>hamcrest-all</artifactId>
+            <artifactId>hamcrest</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>

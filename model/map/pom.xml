@@ -3,13 +3,38 @@
     <parent>
         <artifactId>keycloak-model-pom</artifactId>
         <groupId>org.keycloak</groupId>
+<<<<<<< HEAD
         <version>15.0.3</version>
+=======
+        <version>15.1.1</version>
+>>>>>>> 6bfd4549bb1e9a17791849252e1de0d95a9f4012
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>keycloak-model-map</artifactId>
     <name>Keycloak Model Map</name>
     <description/>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.keycloak</groupId>
+                            <artifactId>keycloak-model-build-processor</artifactId>
+                            <version>${project.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                    <annotationProcessors>
+                        <annotationProcessor>org.keycloak.models.map.processor.GenerateEntityImplementationsProcessor</annotationProcessor>
+                    </annotationProcessors>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
     <dependencies>
         <dependency>
@@ -39,9 +64,16 @@
         </dependency>
         <dependency>
             <groupId>org.hamcrest</groupId>
-            <artifactId>hamcrest-all</artifactId>
+            <artifactId>hamcrest</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.keycloak</groupId>
+            <artifactId>keycloak-model-build-processor</artifactId>
+            <version>${project.version}</version>
+            <optional>true</optional>
+        </dependency>
     </dependencies>
+    
 
 </project>

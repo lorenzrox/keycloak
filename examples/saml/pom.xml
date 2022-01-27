@@ -20,7 +20,11 @@
     <parent>
         <artifactId>keycloak-examples-parent</artifactId>
         <groupId>org.keycloak</groupId>
+<<<<<<< HEAD
         <version>15.0.3</version>
+=======
+        <version>15.1.1</version>
+>>>>>>> 6bfd4549bb1e9a17791849252e1de0d95a9f4012
     </parent>
 
     <name>SAML Examples</name>
@@ -31,9 +35,6 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>post-with-signature</module>
-        <module>post-with-encryption</module>
-        <module>redirect-with-signature</module>
         <module>servlet-filter</module>
     </modules>
 </project>
