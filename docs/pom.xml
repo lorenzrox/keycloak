@@ -19,12 +19,8 @@
     <parent>
         <artifactId>keycloak-parent</artifactId>
         <groupId>org.keycloak</groupId>
-<<<<<<< HEAD:examples/demo-template/customer-app-js/pom.xml
-        <version>15.0.3</version>
-=======
         <version>15.1.1</version>
         <relativePath>../pom.xml</relativePath>
->>>>>>> 6bfd4549bb1e9a17791849252e1de0d95a9f4012:docs/pom.xml
     </parent>
     <name>Keycloak Docs Parent</name>
     <description/>

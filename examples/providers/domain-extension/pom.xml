@@ -20,11 +20,7 @@
     <parent>
         <artifactId>keycloak-examples-providers-parent</artifactId>
         <groupId>org.keycloak</groupId>
-<<<<<<< HEAD
-        <version>15.0.3</version>
-=======
         <version>15.1.1</version>
->>>>>>> 6bfd4549bb1e9a17791849252e1de0d95a9f4012
     </parent>
 
     <name>Domain Extension Example</name>
@@ -70,4 +66,3 @@
         <finalName>domain-extension-example</finalName>
     </build>
 </project>
-
