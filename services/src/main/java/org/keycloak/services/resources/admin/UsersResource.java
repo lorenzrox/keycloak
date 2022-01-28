@@ -227,10 +227,11 @@ public class UsersResource {
         UserModel user = session.users().getUserById(realm, id);
         if (user == null) {
             // we do this to make sure somebody can't phish ids
-            if (auth.users().canQuery())
+            if (auth.users().canQuery()) {
                 throw new NotFoundException("User not found");
-            else
+            } else {
                 throw new ForbiddenException();
+            }
         }
         UserResource resource = new UserResource(realm, user, auth, adminEvent);
         ResteasyProviderFactory.getInstance().injectProperties(resource);
@@ -243,30 +244,28 @@ public class UsersResource {
      *
      * Returns a stream of users, filtered according to query parameters.
      *
-     * @param search              A String contained in username, first or last
-     *                            name, or email
-     * @param last                A String contained in lastName, or the complete
-     *                            lastName, if param "exact" is true
-     * @param first               A String contained in firstName, or the complete
-     *                            firstName, if param "exact" is true
-     * @param email               A String contained in email, or the complete
-     *                            email, if param "exact" is true
-     * @param username            A String contained in username, or the complete
-     *                            username, if param "exact" is true
-     * @param emailVerified       whether the email has been verified
-     * @param idpAlias            The alias of an Identity Provider linked to the
-     *                            user
-     * @param idpUserId           The userId at an Identity Provider linked to the
-     *                            user
-     * @param firstResult         Pagination offset
-     * @param maxResults          Maximum results size (defaults to 100)
-     * @param enabled             Boolean representing if user is enabled or not
+     * @param search A String contained in username, first or last name, or
+     * email
+     * @param last A String contained in lastName, or the complete lastName, if
+     * param "exact" is true
+     * @param first A String contained in firstName, or the complete firstName,
+     * if param "exact" is true
+     * @param email A String contained in email, or the complete email, if param
+     * "exact" is true
+     * @param username A String contained in username, or the complete username,
+     * if param "exact" is true
+     * @param emailVerified whether the email has been verified
+     * @param idpAlias The alias of an Identity Provider linked to the user
+     * @param idpUserId The userId at an Identity Provider linked to the user
+     * @param firstResult Pagination offset
+     * @param maxResults Maximum results size (defaults to 100)
+     * @param enabled Boolean representing if user is enabled or not
      * @param briefRepresentation Boolean which defines whether brief
-     *                            representations are returned (default: false)
-     * @param exact               Boolean which defines whether the params "last",
-     *                            "first", "email" and "username" must match exactly
-     * @param searchQuery         A query to search for custom attributes, in the
-     *                            format 'key1:value2 key2:value2'
+     * representations are returned (default: false)
+     * @param exact Boolean which defines whether the params "last", "first",
+     * "email" and "username" must match exactly
+     * @param searchQuery A query to search for custom attributes, in the format
+     * 'key1:value2 key2:value2'
      * @return a non-null {@code Stream} of users
      */
     @GET
@@ -359,33 +358,33 @@ public class UsersResource {
     }
 
     /**
-     * Returns the number of users that match the given criteria.
-     * It can be called in three different ways.
-     * 1. Don't specify any criteria and pass {@code null}. The number of all
-     * users within that realm will be returned.
+     * Returns the number of users that match the given criteria. It can be
+     * called in three different ways. 1. Don't specify any criteria and pass
+     * {@code null}. The number of all users within that realm will be returned.
      * <p>
-     * 2. If {@code search} is specified other criteria such as {@code last} will
-     * be ignored even though you set them. The {@code search} string will be
-     * matched against the first and last name, the username and the email of a
-     * user.
+     * 2. If {@code search} is specified other criteria such as {@code last}
+     * will be ignored even though you set them. The {@code search} string will
+     * be matched against the first and last name, the username and the email of
+     * a user.
      * <p>
-     * 3. If {@code search} is unspecified but any of {@code last}, {@code first},
-     * {@code email} or {@code username} those criteria are matched against their
-     * respective fields on a user entity. Combined with a logical and.
+     * 3. If {@code search} is unspecified but any of {@code last},
+     * {@code first}, {@code email} or {@code username} those criteria are
+     * matched against their respective fields on a user entity. Combined with a
+     * logical and.
      *
-     * @param search   arbitrary search string for all the fields below
-     * @param last     last name filter
-     * @param first    first name filter
-     * @param email    email filter
+     * @param search arbitrary search string for all the fields below
+     * @param last last name filter
+     * @param first first name filter
+     * @param email email filter
      * @param username username filter
-     * @param enabled  Boolean representing if user is enabled or not
+     * @param enabled Boolean representing if user is enabled or not
      * @return the number of users that match the given criteria
      */
     @Path("count")
     @GET
     @NoCache
     @Produces(MediaType.APPLICATION_JSON)
-    public Integer getUsersCount(@QueryParam("search") String search,
+    public Long getUsersCount(@QueryParam("search") String search,
             @QueryParam("lastName") String last,
             @QueryParam("firstName") String first,
             @QueryParam("email") String email,
@@ -399,14 +398,13 @@ public class UsersResource {
             if (search.startsWith(SEARCH_ID_PARAMETER)) {
                 UserModel userModel = session.users().getUserById(realm,
                         search.substring(SEARCH_ID_PARAMETER.length()).trim());
-                return userModel != null && userPermissionEvaluator.canView(userModel) ? 1 : 0;
+                return userModel != null && userPermissionEvaluator.canView(userModel) ? 1L : 0L;
             } else if (userPermissionEvaluator.canView()) {
-                return session.users().getUsersCount(realm, search.trim());
+                return Long.valueOf(session.users().getUsersCount(realm, search.trim()));
             } else {
-                return session.users().getUsersCount(realm, search.trim(), auth.groups().getGroupsWithViewPermission());
+                return Long.valueOf(session.users().getUsersCount(realm, search.trim(), auth.groups().getGroupsWithViewPermission()));
             }
-        } else if (last != null || first != null || email != null || username != null || emailVerified != null
-                || enabled != null) {
+        } else if (last != null || first != null || email != null || username != null || emailVerified != null || enabled != null) {
             Map<String, String> parameters = new HashMap<>();
             if (last != null) {
                 parameters.put(UserModel.LAST_NAME, last);
@@ -427,14 +425,14 @@ public class UsersResource {
                 parameters.put(UserModel.ENABLED, enabled.toString());
             }
             if (userPermissionEvaluator.canView()) {
-                return session.users().getUsersCount(realm, parameters);
+                return Long.valueOf(session.users().getUsersCount(realm, parameters));
             } else {
-                return session.users().getUsersCount(realm, parameters, auth.groups().getGroupsWithViewPermission());
+                return Long.valueOf(session.users().getUsersCount(realm, parameters, auth.groups().getGroupsWithViewPermission()));
             }
         } else if (userPermissionEvaluator.canView()) {
-            return session.users().getUsersCount(realm);
+            return Long.valueOf(session.users().getUsersCount(realm));
         } else {
-            return session.users().getUsersCount(realm, auth.groups().getGroupsWithViewPermission());
+            return Long.valueOf(session.users().getUsersCount(realm, auth.groups().getGroupsWithViewPermission()));
         }
     }
 
