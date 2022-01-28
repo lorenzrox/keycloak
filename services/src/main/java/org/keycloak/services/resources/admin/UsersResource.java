@@ -123,7 +123,7 @@ public class UsersResource {
         }
 
         String username = rep.getUsername();
-        if(realm.isRegistrationEmailAsUsername()) {
+        if (realm.isRegistrationEmailAsUsername()) {
             username = rep.getEmail();
         }
         if (ObjectUtil.isBlank(username)) {
@@ -136,7 +136,7 @@ public class UsersResource {
         }
         if (rep.getEmail() != null && !realm.isDuplicateEmailsAllowed()) {
             try {
-                if(session.users().getUserByEmail(realm, rep.getEmail()) != null) {
+                if (session.users().getUserByEmail(realm, rep.getEmail()) != null) {
                     return ErrorResponse.exists("User exists with same email");
                 }
             } catch (ModelDuplicateException e) {
@@ -161,13 +161,15 @@ public class UsersResource {
             RepresentationToModel.createGroups(rep, realm, user);
 
             RepresentationToModel.createCredentials(rep, session, realm, user, true);
-            adminEvent.operation(OperationType.CREATE).resourcePath(session.getContext().getUri(), user.getId()).representation(rep).success();
+            adminEvent.operation(OperationType.CREATE).resourcePath(session.getContext().getUri(), user.getId())
+                    .representation(rep).success();
 
             if (session.getTransactionManager().isActive()) {
                 session.getTransactionManager().commit();
             }
 
-            return Response.created(session.getContext().getUri().getAbsolutePathBuilder().path(user.getId()).build()).build();
+            return Response.created(session.getContext().getUri().getAbsolutePathBuilder().path(user.getId()).build())
+                    .build();
         } catch (ModelDuplicateException e) {
             if (session.getTransactionManager().isActive()) {
                 session.getTransactionManager().setRollbackOnly();
@@ -178,7 +180,7 @@ public class UsersResource {
                 session.getTransactionManager().setRollbackOnly();
             }
             return ErrorResponse.error("Password policy not met", Response.Status.BAD_REQUEST);
-        } catch (ModelException me){
+        } catch (ModelException me) {
             if (session.getTransactionManager().isActive()) {
                 session.getTransactionManager().setRollbackOnly();
             }
@@ -202,8 +204,10 @@ public class UsersResource {
             return false;
         }
 
-        // if groups is part of the user rep, check if admin has manage_members and manage_membership on each group
-        // an exception is thrown in case the current user does not have permissions to manage any of the groups
+        // if groups is part of the user rep, check if admin has manage_members and
+        // manage_membership on each group
+        // an exception is thrown in case the current user does not have permissions to
+        // manage any of the groups
         for (GroupModel group : groups) {
             auth.groups().requireManageMembers(group);
             auth.groups().requireManageMembership(group);
@@ -223,12 +227,14 @@ public class UsersResource {
         UserModel user = session.users().getUserById(realm, id);
         if (user == null) {
             // we do this to make sure somebody can't phish ids
-            if (auth.users().canQuery()) throw new NotFoundException("User not found");
-            else throw new ForbiddenException();
+            if (auth.users().canQuery())
+                throw new NotFoundException("User not found");
+            else
+                throw new ForbiddenException();
         }
         UserResource resource = new UserResource(realm, user, auth, adminEvent);
         ResteasyProviderFactory.getInstance().injectProperties(resource);
-        //resourceContext.initResource(users);
+        // resourceContext.initResource(users);
         return resource;
     }
 
@@ -237,39 +243,49 @@ public class UsersResource {
      *
      * Returns a stream of users, filtered according to query parameters.
      *
-     * @param search A String contained in username, first or last name, or email
-     * @param last A String contained in lastName, or the complete lastName, if param "exact" is true
-     * @param first A String contained in firstName, or the complete firstName, if param "exact" is true
-     * @param email A String contained in email, or the complete email, if param "exact" is true
-     * @param username A String contained in username, or the complete username, if param "exact" is true
-     * @param emailVerified whether the email has been verified
-     * @param idpAlias The alias of an Identity Provider linked to the user
-     * @param idpUserId The userId at an Identity Provider linked to the user
-     * @param firstResult Pagination offset
-     * @param maxResults Maximum results size (defaults to 100)
-     * @param enabled Boolean representing if user is enabled or not
-     * @param briefRepresentation Boolean which defines whether brief representations are returned (default: false)
-     * @param exact Boolean which defines whether the params "last", "first", "email" and "username" must match exactly
-     * @param searchQuery A query to search for custom attributes, in the format 'key1:value2 key2:value2'
+     * @param search              A String contained in username, first or last
+     *                            name, or email
+     * @param last                A String contained in lastName, or the complete
+     *                            lastName, if param "exact" is true
+     * @param first               A String contained in firstName, or the complete
+     *                            firstName, if param "exact" is true
+     * @param email               A String contained in email, or the complete
+     *                            email, if param "exact" is true
+     * @param username            A String contained in username, or the complete
+     *                            username, if param "exact" is true
+     * @param emailVerified       whether the email has been verified
+     * @param idpAlias            The alias of an Identity Provider linked to the
+     *                            user
+     * @param idpUserId           The userId at an Identity Provider linked to the
+     *                            user
+     * @param firstResult         Pagination offset
+     * @param maxResults          Maximum results size (defaults to 100)
+     * @param enabled             Boolean representing if user is enabled or not
+     * @param briefRepresentation Boolean which defines whether brief
+     *                            representations are returned (default: false)
+     * @param exact               Boolean which defines whether the params "last",
+     *                            "first", "email" and "username" must match exactly
+     * @param searchQuery         A query to search for custom attributes, in the
+     *                            format 'key1:value2 key2:value2'
      * @return a non-null {@code Stream} of users
      */
     @GET
     @NoCache
     @Produces(MediaType.APPLICATION_JSON)
     public Stream<UserRepresentation> getUsers(@QueryParam("search") String search,
-                                               @QueryParam("lastName") String last,
-                                               @QueryParam("firstName") String first,
-                                               @QueryParam("email") String email,
-                                               @QueryParam("username") String username,
-                                               @QueryParam("emailVerified") Boolean emailVerified,
-                                               @QueryParam("idpAlias") String idpAlias,
-                                               @QueryParam("idpUserId") String idpUserId,
-                                               @QueryParam("first") Integer firstResult,
-                                               @QueryParam("max") Integer maxResults,
-                                               @QueryParam("enabled") Boolean enabled,
-                                               @QueryParam("briefRepresentation") Boolean briefRepresentation,
-                                               @QueryParam("exact") Boolean exact,
-                                               @QueryParam("q") String searchQuery) {
+            @QueryParam("lastName") String last,
+            @QueryParam("firstName") String first,
+            @QueryParam("email") String email,
+            @QueryParam("username") String username,
+            @QueryParam("emailVerified") Boolean emailVerified,
+            @QueryParam("idpAlias") String idpAlias,
+            @QueryParam("idpUserId") String idpUserId,
+            @QueryParam("first") Integer firstResult,
+            @QueryParam("max") Integer maxResults,
+            @QueryParam("enabled") Boolean enabled,
+            @QueryParam("briefRepresentation") Boolean briefRepresentation,
+            @QueryParam("exact") Boolean exact,
+            @QueryParam("q") String searchQuery) {
         UserPermissionEvaluator userPermissionEvaluator = auth.users();
 
         userPermissionEvaluator.requireQuery();
@@ -284,8 +300,8 @@ public class UsersResource {
         Stream<UserModel> userModels = Stream.empty();
         if (search != null) {
             if (search.startsWith(SEARCH_ID_PARAMETER)) {
-                UserModel userModel =
-                        session.users().getUserById(realm, search.substring(SEARCH_ID_PARAMETER.length()).trim());
+                UserModel userModel = session.users().getUserById(realm,
+                        search.substring(SEARCH_ID_PARAMETER.length()).trim());
                 if (userModel != null) {
                     userModels = Stream.of(userModel);
                 }
@@ -299,44 +315,45 @@ public class UsersResource {
                         maxResults, false);
             }
         } else if (last != null || first != null || email != null || username != null || emailVerified != null
-                || idpAlias != null || idpUserId != null || enabled != null || exact != null || !searchAttributes.isEmpty()) {
-                    Map<String, String> attributes = new HashMap<>();
-                    if (last != null) {
-                        attributes.put(UserModel.LAST_NAME, last);
-                    }
-                    if (first != null) {
-                        attributes.put(UserModel.FIRST_NAME, first);
-                    }
-                    if (email != null) {
-                        attributes.put(UserModel.EMAIL, email);
-                    }
-                    if (username != null) {
-                        attributes.put(UserModel.USERNAME, username);
-                    }
-                    if (emailVerified != null) {
-                        attributes.put(UserModel.EMAIL_VERIFIED, emailVerified.toString());
-                    }
-                    if (idpAlias != null) {
-                        attributes.put(UserModel.IDP_ALIAS, idpAlias);
-                    }
-                    if (idpUserId != null) {
-                        attributes.put(UserModel.IDP_USER_ID, idpUserId);
-                    }
-                    if (enabled != null) {
-                        attributes.put(UserModel.ENABLED, enabled.toString());
-                    }
-                    if (exact != null) {
-                        attributes.put(UserModel.EXACT, exact.toString());
-                    }
+                || idpAlias != null || idpUserId != null || enabled != null || exact != null
+                || !searchAttributes.isEmpty()) {
+            Map<String, String> attributes = new HashMap<>();
+            if (last != null) {
+                attributes.put(UserModel.LAST_NAME, last);
+            }
+            if (first != null) {
+                attributes.put(UserModel.FIRST_NAME, first);
+            }
+            if (email != null) {
+                attributes.put(UserModel.EMAIL, email);
+            }
+            if (username != null) {
+                attributes.put(UserModel.USERNAME, username);
+            }
+            if (emailVerified != null) {
+                attributes.put(UserModel.EMAIL_VERIFIED, emailVerified.toString());
+            }
+            if (idpAlias != null) {
+                attributes.put(UserModel.IDP_ALIAS, idpAlias);
+            }
+            if (idpUserId != null) {
+                attributes.put(UserModel.IDP_USER_ID, idpUserId);
+            }
+            if (enabled != null) {
+                attributes.put(UserModel.ENABLED, enabled.toString());
+            }
+            if (exact != null) {
+                attributes.put(UserModel.EXACT, exact.toString());
+            }
 
-                    attributes.putAll(searchAttributes);
+            attributes.putAll(searchAttributes);
 
-                    return searchForUser(attributes, realm, userPermissionEvaluator, briefRepresentation, firstResult,
-                            maxResults, true);
-                } else {
-                    return searchForUser(new HashMap<>(), realm, userPermissionEvaluator, briefRepresentation,
-                            firstResult, maxResults, false);
-                }
+            return searchForUser(attributes, realm, userPermissionEvaluator, briefRepresentation, firstResult,
+                    maxResults, true);
+        } else {
+            return searchForUser(new HashMap<>(), realm, userPermissionEvaluator, briefRepresentation,
+                    firstResult, maxResults, false);
+        }
 
         return toRepresentation(realm, userPermissionEvaluator, briefRepresentation, userModels);
     }
@@ -361,7 +378,7 @@ public class UsersResource {
      * @param first    first name filter
      * @param email    email filter
      * @param username username filter
-     * @param enabled Boolean representing if user is enabled or not
+     * @param enabled  Boolean representing if user is enabled or not
      * @return the number of users that match the given criteria
      */
     @Path("count")
@@ -369,25 +386,27 @@ public class UsersResource {
     @NoCache
     @Produces(MediaType.APPLICATION_JSON)
     public Integer getUsersCount(@QueryParam("search") String search,
-                                 @QueryParam("lastName") String last,
-                                 @QueryParam("firstName") String first,
-                                 @QueryParam("email") String email,
-                                 @QueryParam("emailVerified") Boolean emailVerified,
-                                 @QueryParam("username") String username,
-                                 @QueryParam("enabled") Boolean enabled) {
+            @QueryParam("lastName") String last,
+            @QueryParam("firstName") String first,
+            @QueryParam("email") String email,
+            @QueryParam("emailVerified") Boolean emailVerified,
+            @QueryParam("username") String username,
+            @QueryParam("enabled") Boolean enabled) {
         UserPermissionEvaluator userPermissionEvaluator = auth.users();
         userPermissionEvaluator.requireQuery();
 
         if (search != null) {
             if (search.startsWith(SEARCH_ID_PARAMETER)) {
-                UserModel userModel = session.users().getUserById(realm, search.substring(SEARCH_ID_PARAMETER.length()).trim());
+                UserModel userModel = session.users().getUserById(realm,
+                        search.substring(SEARCH_ID_PARAMETER.length()).trim());
                 return userModel != null && userPermissionEvaluator.canView(userModel) ? 1 : 0;
             } else if (userPermissionEvaluator.canView()) {
                 return session.users().getUsersCount(realm, search.trim());
             } else {
                 return session.users().getUsersCount(realm, search.trim(), auth.groups().getGroupsWithViewPermission());
             }
-        } else if (last != null || first != null || email != null || username != null || emailVerified != null || enabled != null) {
+        } else if (last != null || first != null || email != null || username != null || emailVerified != null
+                || enabled != null) {
             Map<String, String> parameters = new HashMap<>();
             if (last != null) {
                 parameters.put(UserModel.LAST_NAME, last);
@@ -405,7 +424,7 @@ public class UsersResource {
                 parameters.put(UserModel.EMAIL_VERIFIED, emailVerified.toString());
             }
             if (enabled != null) {
-                attributes.put(UserModel.ENABLED, enabled.toString());
+                parameters.put(UserModel.ENABLED, enabled.toString());
             }
             if (userPermissionEvaluator.canView()) {
                 return session.users().getUsersCount(realm, parameters);
@@ -432,7 +451,9 @@ public class UsersResource {
         return resource;
     }
 
-    private Stream<UserRepresentation> searchForUser(Map<String, String> attributes, RealmModel realm, UserPermissionEvaluator usersEvaluator, Boolean briefRepresentation, Integer firstResult, Integer maxResults, Boolean includeServiceAccounts) {
+    private Stream<UserRepresentation> searchForUser(Map<String, String> attributes, RealmModel realm,
+            UserPermissionEvaluator usersEvaluator, Boolean briefRepresentation, Integer firstResult,
+            Integer maxResults, Boolean includeServiceAccounts) {
         session.setAttribute(UserModel.INCLUDE_SERVICE_ACCOUNT, includeServiceAccounts);
 
         if (!auth.users().canView()) {
@@ -447,7 +468,8 @@ public class UsersResource {
         return toRepresentation(realm, usersEvaluator, briefRepresentation, userModels);
     }
 
-    private Stream<UserRepresentation> toRepresentation(RealmModel realm, UserPermissionEvaluator usersEvaluator, Boolean briefRepresentation, Stream<UserModel> userModels) {
+    private Stream<UserRepresentation> toRepresentation(RealmModel realm, UserPermissionEvaluator usersEvaluator,
+            Boolean briefRepresentation, Stream<UserModel> userModels) {
         boolean briefRepresentationB = briefRepresentation != null && briefRepresentation;
         boolean canViewGlobal = usersEvaluator.canView();
 
