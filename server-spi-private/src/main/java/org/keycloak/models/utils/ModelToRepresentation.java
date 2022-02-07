@@ -201,6 +201,16 @@ public class ModelToRepresentation {
         return rep;
     }
 
+    public static Stream<GroupRepresentation> toSubGroupHierarchy(GroupModel group, boolean full, Integer first, Integer max) {
+        return group.getSubGroupsStream(null, first, max)
+                .map(g -> toRepresentation(g, full));
+    }
+
+    public static Stream<GroupRepresentation> toSubGroupHierarchy(GroupModel group, boolean full) {
+        return group.getSubGroupsStream()
+                .map(g -> toRepresentation(g, full));
+    }
+
     private static boolean groupMatchesSearchOrIsPathElement(GroupModel group, String search) {
         if (StringUtil.isBlank(search)) {
             return true;
@@ -210,7 +220,7 @@ public class ModelToRepresentation {
         }
         return group.getSubGroupsStream().findAny().isPresent();
     }
-
+    
     public static UserRepresentation toRepresentation(KeycloakSession session, RealmModel realm, UserModel user) {
         UserRepresentation rep = new UserRepresentation();
         rep.setId(user.getId());
@@ -324,6 +334,16 @@ public class ModelToRepresentation {
         rep.setComposite(role.isComposite());
         rep.setClientRole(role.isClientRole());
         rep.setContainerId(role.getContainerId());
+        return rep;
+    }
+
+    public static RealmRepresentation toBriefRepresentation(RealmModel realm) {
+        RealmRepresentation rep = new RealmRepresentation();
+        rep.setId(realm.getId());
+        rep.setRealm(realm.getName());
+        rep.setDisplayName(realm.getDisplayName());
+        rep.setDisplayNameHtml(realm.getDisplayNameHtml());
+        rep.setEnabled(realm.isEnabled());
         return rep;
     }
 

@@ -144,7 +144,6 @@ public interface GroupModel extends RoleMapperModel {
     default long getSubGroupsCount() {
         return getSubGroupsCountByNameContaining(null);
     }
-    
     default long getSubGroupsCountByNameContaining(String search) {
         if (search == null) {
             return getSubGroupsStream().count();
