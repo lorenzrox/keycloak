@@ -53,6 +53,8 @@ import java.util.jar.JarFile;
 
 import io.quarkus.agroal.spi.JdbcDataSourceBuildItem;
 import io.quarkus.deployment.IsDevelopment;
+import io.quarkus.deployment.IsNormal;
+import io.quarkus.deployment.IsTest;
 import io.quarkus.deployment.annotations.Consume;
 import io.quarkus.deployment.builditem.CombinedIndexBuildItem;
 import io.quarkus.deployment.builditem.GeneratedResourceBuildItem;
@@ -265,16 +267,21 @@ class KeycloakProcessor {
      *
      * @param configSources
      */
-    @BuildStep
+    @BuildStep(onlyIfNot = IsIntegrationTest.class )
     void configureConfigSources(BuildProducer<StaticInitConfigSourceProviderBuildItem> configSources) {
         configSources.produce(new StaticInitConfigSourceProviderBuildItem(KeycloakConfigSourceProvider.class.getName()));
+    }
+
+    @BuildStep(onlyIf = IsIntegrationTest.class)
+    void prepareTestEnvironment(BuildProducer<StaticInitConfigSourceProviderBuildItem> configSources) {
+        configSources.produce(new StaticInitConfigSourceProviderBuildItem("org.keycloak.quarkus.runtime.configuration.test.TestKeycloakConfigSourceProvider"));
     }
 
     /**
      * <p>Make the build time configuration available at runtime so that the server can run without having to specify some of
      * the properties again.
      */
-    @BuildStep(onlyIf = isReAugmentation.class)
+    @BuildStep(onlyIf = IsReAugmentation.class)
     void persistBuildTimeProperties(BuildProducer<GeneratedResourceBuildItem> resources) {
         Properties properties = new Properties();
 

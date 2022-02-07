@@ -204,10 +204,8 @@ public class UsersResource {
             return false;
         }
 
-        // if groups is part of the user rep, check if admin has manage_members and
-        // manage_membership on each group
-        // an exception is thrown in case the current user does not have permissions to
-        // manage any of the groups
+        // if groups is part of the user rep, check if admin has manage_members and manage_membership on each group
+        // an exception is thrown in case the current user does not have permissions to manage any of the groups
         for (GroupModel group : groups) {
             auth.groups().requireManageMembers(group);
             auth.groups().requireManageMembership(group);
