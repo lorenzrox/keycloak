@@ -168,11 +168,6 @@ public class ModelToRepresentation {
                 .map(group -> toRepresentation(group, full));
     }
 
-    public static Stream<GroupRepresentation> toSubGroupHierarchy(GroupModel group, boolean full, Integer first, Integer max) {
-        return group.getSubGroupsStream(null, first, max)
-                .map(g -> toRepresentation(g, full));
-    }
-
     public static Stream<GroupRepresentation> toGroupHierarchy(RealmModel realm, boolean full) {
         return realm.getTopLevelGroupsStream()
                 .map(g -> toGroupHierarchy(g, full));
@@ -181,11 +176,6 @@ public class ModelToRepresentation {
     public static Stream<GroupRepresentation> toGroupHierarchy(UserModel user, boolean full) {
         return user.getGroupsStream()
                 .map(group -> toRepresentation(group, full));
-    }
-
-    public static Stream<GroupRepresentation> toSubGroupHierarchy(GroupModel group, boolean full) {
-        return group.getSubGroupsStream()
-                .map(g -> toRepresentation(g, full));
     }
 
     public static GroupRepresentation toGroupHierarchy(GroupModel group, boolean full) {
