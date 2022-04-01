@@ -26,6 +26,7 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.NoType;
+import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
@@ -50,6 +51,7 @@ import javax.lang.model.SourceVersion;
 import static org.keycloak.models.map.processor.FieldAccessorType.GETTER;
 import static org.keycloak.models.map.processor.Util.getGenericsDeclaration;
 import static org.keycloak.models.map.processor.Util.isMapType;
+import static org.keycloak.models.map.processor.Util.singularToPlural;
 
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
 public abstract class AbstractGenerateEntityImplementationsProcessor extends AbstractProcessor {
@@ -118,16 +120,16 @@ public abstract class AbstractGenerateEntityImplementationsProcessor extends Abs
     protected Map<String, HashSet<ExecutableElement>> methodsPerAttributeMapping(TypeElement e) {
         Map<String, HashSet<ExecutableElement>> methodsPerAttribute = getAllAbstractMethods(e)
           .filter(Util::isNotIgnored)
-          .filter(ee -> ! (ee.getReceiverType() instanceof NoType))
+          .filter(ee -> !(ee.getReceiverType() instanceof NoType && ee.getReceiverType().getKind() != TypeKind.NONE))
           .collect(Collectors.toMap(this::determineAttributeFromMethodName, v -> new HashSet<>(Arrays.asList(v)), (a,b) -> { a.addAll(b); return a; }));
 
         // Merge plurals with singulars
         methodsPerAttribute.keySet().stream()
-                .filter(key -> methodsPerAttribute.containsKey(key + "s"))
+                .filter(key -> methodsPerAttribute.containsKey(singularToPlural(key)))
                 .collect(Collectors.toSet())
                 .forEach(key -> {
                     HashSet<ExecutableElement> removed = methodsPerAttribute.remove(key);
-                    methodsPerAttribute.get(key + "s").addAll(removed);
+                    methodsPerAttribute.get(singularToPlural(key)).addAll(removed);
                 });
 
         return methodsPerAttribute;
@@ -163,7 +165,10 @@ public abstract class AbstractGenerateEntityImplementationsProcessor extends Abs
     }
 
     protected boolean isImmutableFinalType(TypeMirror fieldType) {
-        return isPrimitiveType(fieldType) || isBoxedPrimitiveType(fieldType) || Objects.equals("java.lang.String", fieldType.toString());
+        return isPrimitiveType(fieldType)
+                || isBoxedPrimitiveType(fieldType)
+                || isEnumType(fieldType)
+                || Objects.equals("java.lang.String", fieldType.toString());
     }
 
     protected boolean isKnownCollectionOfImmutableFinalTypes(TypeMirror fieldType) {
@@ -204,6 +209,10 @@ public abstract class AbstractGenerateEntityImplementationsProcessor extends Abs
                     "))";
         }
         return "deepClone(" + parameterName + ")";
+    }
+
+    protected boolean isEnumType(TypeMirror fieldType) {
+        return types.asElement(fieldType).getKind() == ElementKind.ENUM;
     }
 
     protected boolean isPrimitiveType(TypeMirror fieldType) {

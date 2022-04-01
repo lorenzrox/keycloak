@@ -77,6 +77,8 @@ public class GenerateHotRodEntityImplementationsProcessor extends AbstractGenera
             if (interfaceClass == null || interfaceClass.isEmpty()) return;
             TypeElement parentClassElement = elements.getTypeElement(hotRodAnnotation.inherits());
             if (parentClassElement == null) return;
+            boolean parentClassHasGeneric = !getGenericsDeclaration(parentClassElement.asType()).isEmpty();
+
 
             TypeElement parentInterfaceElement = elements.getTypeElement(interfaceClass);
             if (parentInterfaceElement == null) return;
@@ -104,6 +106,7 @@ public class GenerateHotRodEntityImplementationsProcessor extends AbstractGenera
             boolean needsDeepClone = fieldGetters(methodsPerAttribute)
                     .map(ExecutableElement::getReturnType)
                     .anyMatch(fieldType -> ! isKnownCollectionOfImmutableFinalTypes(fieldType) && ! isImmutableFinalType(fieldType));
+            boolean usingGeneratedCloner = ! hasDeepClone && needsDeepClone;
             boolean hasId = methodsPerAttribute.containsKey("Id") || allMembers.stream().anyMatch(el -> "getId".equals(el.getSimpleName().toString()));
 
             JavaFileObject file = processingEnv.getFiler().createSourceFile(hotRodImplClassName);
@@ -118,9 +121,11 @@ public class GenerateHotRodEntityImplementationsProcessor extends AbstractGenera
                 pw.println("import java.util.stream.Collectors;");
                 pw.println();
                 pw.println("// DO NOT CHANGE THIS CLASS, IT IS GENERATED AUTOMATICALLY BY " + GenerateHotRodEntityImplementationsProcessor.class.getSimpleName());
-                pw.println("public class " + hotRodSimpleClassName + " extends " + parentClassElement.getQualifiedName().toString() + " implements "
+                pw.println("public class " + hotRodSimpleClassName
+                        + " extends "
+                        + parentClassElement.getQualifiedName().toString() + (parentClassHasGeneric ? "<" + e.getQualifiedName().toString() + ">" : "")
+                        + " implements "
                         + parentInterfaceElement.getQualifiedName().toString()
-                        + ", " + generalHotRodDelegate.getQualifiedName().toString() + "<" + e.getQualifiedName().toString() + ">"
                         + " {");
                 pw.println();
                 pw.println("    private final " + className + " " + ENTITY_VARIABLE + ";");
@@ -132,43 +137,41 @@ public class GenerateHotRodEntityImplementationsProcessor extends AbstractGenera
                         .map(ExecutableElement.class::cast)
                         .filter((ExecutableElement ee) -> ee.getKind() == ElementKind.CONSTRUCTOR)
                         .forEach((ExecutableElement ee) -> {
-                            if (hasDeepClone || ! needsDeepClone) {
-                                pw.println("    "
-                                        + ee.getModifiers().stream().map(Object::toString).collect(Collectors.joining(" "))
-                                        + " " + hotRodSimpleClassName + "(" + methodParameters(ee.getParameters()) + ") {"
-                                );
-                                pw.println("        super(" + ee.getParameters() + ");");
-                                pw.println("        this." + ENTITY_VARIABLE + " = new " + className + "();");
-                                pw.println("    }");
-                            } else if (needsDeepClone) {
+                            // Create constructor and initialize cloner to DUMB_CLONER if necessary
+                            if (usingGeneratedCloner) {
                                 pw.println("    /**");
                                 pw.println("     * @deprecated This constructor uses a {@link DeepCloner#DUMB_CLONER} that does not clone anything. Use {@link #" + hotRodSimpleClassName + "(DeepCloner)} variant instead");
                                 pw.println("     */");
-                                pw.println("    "
-                                        + ee.getModifiers().stream().map(Object::toString).collect(Collectors.joining(" "))
-                                        + " "
-                                        + hotRodSimpleClassName + "(" + methodParameters(ee.getParameters()) + ") { this(DeepCloner.DUMB_CLONER" + (ee.getParameters().isEmpty() ? "" : ", ") + ee.getParameters() + "); }"
-                                );
-                                pw.println("    "
-                                        + ee.getModifiers().stream().map(Object::toString).collect(Collectors.joining(" "))
-                                        + " "
-                                        + hotRodSimpleClassName + "(DeepCloner cloner" + (ee.getParameters().isEmpty() ? "" : ", ") + methodParameters(ee.getParameters()) + ") {"
-                                );
-                                pw.println("        super(" + ee.getParameters() + ");");
-                                pw.println("        this.cloner = cloner;");
-                                pw.println("        this." + ENTITY_VARIABLE + " = new " + className + "();");
-                                pw.println("    }");
                             }
+                            pw.println("    "
+                                    + ee.getModifiers().stream().map(Object::toString).collect(Collectors.joining(" "))
+                                    + " " + hotRodSimpleClassName + "(" + methodParameters(ee.getParameters()) + ") {"
+                            );
+                            pw.println("        super(" + ee.getParameters() + ");");
+                            if (usingGeneratedCloner) pw.println("        this.cloner = DeepCloner.DUMB_CLONER;");
+                            pw.println("        this." + ENTITY_VARIABLE + " = new " + className + "();");
+                            pw.println("    }");
                         });
 
                 // Add constructor for setting HotRodEntity
+                if (usingGeneratedCloner) {
+                    pw.println("    /**");
+                    pw.println("     * @deprecated This constructor uses a {@link DeepCloner#DUMB_CLONER} that does not clone anything. Use {@link #" + hotRodSimpleClassName + "(DeepCloner)} variant instead");
+                    pw.println("     */");
+                }
                 pw.println("    " +
                         "public " + hotRodSimpleClassName + "(" + className + " " + ENTITY_VARIABLE + ") {"
                 );
                 pw.println("        this." + ENTITY_VARIABLE + " = " + ENTITY_VARIABLE + ";");
-                if (! hasDeepClone && needsDeepClone) {
+                if (usingGeneratedCloner) {
                     pw.println("        this.cloner = DeepCloner.DUMB_CLONER;");
                 }
+                pw.println("    }");
+
+                pw.println("    public " + hotRodSimpleClassName + "(DeepCloner cloner) {");
+                pw.println("        super();");
+                pw.println("        this." + ENTITY_VARIABLE + " = new " + className + "();");
+                if (usingGeneratedCloner) pw.println("        this.cloner = cloner;");
                 pw.println("    }");
 
                 // equals, hashCode, toString
@@ -326,7 +329,7 @@ public class GenerateHotRodEntityImplementationsProcessor extends AbstractGenera
                         pw.println("        p0 = " + deepClone(fieldType, "p0") + ";");
                     }
                     pw.println("        " + hotRodFieldType.toString() + " migrated = " + migrateToType(hotRodFieldType, firstParameterType, "p0") + ";");
-                    pw.println("        updated |= ! Objects.equals(" + hotRodEntityField(fieldName) + ", migrated);");
+                    pw.println("        " + hotRodEntityField("updated") + " |= ! Objects.equals(" + hotRodEntityField(fieldName) + ", migrated);");
                     pw.println("        " + hotRodEntityField(fieldName) + " = migrated;");
                     pw.println("    }");
                     return true;
@@ -339,10 +342,10 @@ public class GenerateHotRodEntityImplementationsProcessor extends AbstractGenera
                     }
                     pw.println("        " + collectionItemType.toString() + " migrated = " + migrateToType(collectionItemType, firstParameterType, "p0") + ";");
                     if (isSetType(typeElement)) {
-                        pw.println("        updated |= " + hotRodEntityField(fieldName) + ".add(migrated);");
+                        pw.println("        " + hotRodEntityField("updated") + " |= " + hotRodEntityField(fieldName) + ".add(migrated);");
                     } else {
                         pw.println("        " + hotRodEntityField(fieldName) + ".add(migrated);");
-                        pw.println("        updated = true;");
+                        pw.println("        " + hotRodEntityField("updated") + " = true;");
                     }
                     pw.println("    }");
                     return true;
@@ -351,7 +354,7 @@ public class GenerateHotRodEntityImplementationsProcessor extends AbstractGenera
                     pw.println("    @SuppressWarnings(\"unchecked\") @Override public " + method.getReturnType() + " " + method.getSimpleName() + "(" + firstParameterType + " p0) {");
                     if (isMapType(typeElement)) {
                         // Maps are stored as sets
-                        pw.println("        this.updated |= " + hotRodUtils.getQualifiedName().toString() + ".removeFromSetByMapKey("
+                        pw.println("        " + hotRodEntityField("updated") + " |= " + hotRodUtils.getQualifiedName().toString() + ".removeFromSetByMapKey("
                                 + hotRodEntityField(fieldName) + ", "
                                 + "p0, "
                                 + keyGetterReference(collectionItemType) + ");"
@@ -359,7 +362,7 @@ public class GenerateHotRodEntityImplementationsProcessor extends AbstractGenera
                     } else {
                         pw.println("        if (" + hotRodEntityField(fieldName) + " == null) { return; }");
                         pw.println("        boolean removed = " + hotRodEntityField(fieldName) + ".remove(p0);");
-                        pw.println("        updated |= removed;");
+                        pw.println("        " + hotRodEntityField("updated") + " |= removed;");
                     }
                     pw.println("    }");
                     return true;
@@ -372,12 +375,12 @@ public class GenerateHotRodEntityImplementationsProcessor extends AbstractGenera
                     if (! isImmutableFinalType(secondParameterType)) {
                         pw.println("        p1 = " + deepClone(secondParameterType, "p1") + ";");
                     }
-                    pw.println("        this.updated |= " + hotRodUtils.getQualifiedName().toString() + ".removeFromSetByMapKey("
+                    pw.println("        " + hotRodEntityField("updated") + " |= " + hotRodUtils.getQualifiedName().toString() + ".removeFromSetByMapKey("
                             + hotRodEntityField(fieldName) + ", "
                             + "p0, "
                             + keyGetterReference(collectionItemType) + ");"
                     );
-                    pw.println("        this.updated |= !valueUndefined && " + hotRodEntityField(fieldName)
+                    pw.println("        " + hotRodEntityField("updated") + " |= !valueUndefined && " + hotRodEntityField(fieldName)
                             + ".add(" + migrateToType(collectionItemType, new TypeMirror[]{firstParameterType, secondParameterType}, new String[]{"p0", "p1"}) + ");");
                     pw.println("    }");
                     return true;

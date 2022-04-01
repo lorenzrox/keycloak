@@ -31,11 +31,17 @@
     </description>
     <groupId>org.keycloak</groupId>
     <artifactId>keycloak-parent</artifactId>
-    <version>16.1.1</version>
+    <version>17.0.1</version>
     <packaging>pom</packaging>
 
     <properties>
-        <quarkus.version>2.5.3.Final</quarkus.version>
+        <jboss.repo.nexusUrl>https://s01.oss.sonatype.org/</jboss.repo.nexusUrl>
+        <jboss.releases.repo.id>jboss-releases-repository</jboss.releases.repo.id>
+        <jboss.releases.repo.url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</jboss.releases.repo.url>
+        <jboss.snapshots.repo.id>jboss-snapshots-repository</jboss.snapshots.repo.id>
+        <jboss.snapshots.repo.url>https://s01.oss.sonatype.org/content/repositories/snapshots/</jboss.snapshots.repo.url>
+
+        <quarkus.version>2.7.5.Final</quarkus.version>
 
         <!--
         Performing a Wildfly upgrade? Run the:
@@ -78,8 +84,8 @@
         <jakarta.persistence.version>2.2.3</jakarta.persistence.version>
         <hibernate.core.version>5.3.20.Final</hibernate.core.version>
         <hibernate.c3p0.version>5.3.20.Final</hibernate.c3p0.version>
-        <infinispan.version>11.0.9.Final</infinispan.version>
-        <infinispan.protostream.processor.version>4.3.4.Final</infinispan.protostream.processor.version>
+        <infinispan.version>12.1.7.Final</infinispan.version>
+        <infinispan.protostream.processor.version>4.4.1.Final</infinispan.protostream.processor.version>
         <javax.annotation-api.version>1.3.2</javax.annotation-api.version>
         <jackson.version>2.12.1</jackson.version>
         <jackson.databind.version>${jackson.version}</jackson.databind.version>
@@ -111,10 +117,10 @@
         <jetty93.version>9.3.29.v20201019</jetty93.version>
         <jetty94.version>9.4.40.v20210413</jetty94.version>
         <woodstox.version>6.0.3</woodstox.version>
-        <xmlsec.version>2.1.6</xmlsec.version>
+        <xmlsec.version>2.2.3</xmlsec.version>
         <glassfish.json.version>1.1.6</glassfish.json.version>
         <wildfly.common.version>1.5.4.Final</wildfly.common.version>
-        <ua-parser.version>1.4.3</ua-parser.version>
+        <ua-parser.version>1.5.2</ua-parser.version>
         <picketbox.version>5.0.3.Final-redhat-00007</picketbox.version>
         <google.guava.version>30.1-jre</google.guava.version>
 
@@ -131,7 +137,7 @@
         <freemarker.version>2.3.31</freemarker.version>
 
         <jetty9.version>${jetty92.version}</jetty9.version>
-        <liquibase.version>3.5.5</liquibase.version>
+        <liquibase.version>4.8.0</liquibase.version>
         <osgi.version>4.2.0</osgi.version>
         <pax.web.version>7.1.0</pax.web.version>
         <servlet.api.30.version>1.0.2.Final</servlet.api.30.version>
@@ -158,6 +164,8 @@
         <selenium.version>2.35.0</selenium.version>
         <xml-apis.version>1.4.01</xml-apis.version>
         <subethasmtp.version>3.1.7</subethasmtp.version>
+        <awaitility.version>4.1.1</awaitility.version>
+        <assertj-core.version>3.22.0</assertj-core.version>
         <!-- KEYCLOAK-17585 Prevent microprofile-metrics-api upgrades from version "2.3" due to:
              https://issues.redhat.com/browse/KEYCLOAK-17585?focusedCommentId=16002705&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#comment-16002705
         -->
@@ -212,6 +220,8 @@
         <!-- Version suffix that is appended to directories. Default is the maven GAV version but this can be edited to use a short form version -->
         <server.output.dir.version>${project.version}</server.output.dir.version>
 
+        <!-- Frontend -->
+        <node.version>v16.13.2</node.version>
     </properties>
 
     <url>http://keycloak.org</url>
@@ -232,9 +242,9 @@
 
     <distributionManagement>
         <repository>
-            <id>jboss-releases-repository</id>
+            <id>${jboss.releases.repo.id}</id>
             <name>JBoss Releases Repository</name>
-            <url>https://repository.jboss.org/nexus/service/local/staging/deploy/maven2/</url>
+            <url>${jboss.releases.repo.url}</url>
         </repository>
     </distributionManagement>
 
@@ -1394,7 +1404,7 @@
             <dependency>
                 <groupId>org.keycloak</groupId>
                 <artifactId>keycloak-admin-ui</artifactId>
-                <version>16.1.1</version>
+                <version>17.0.1</version>
             </dependency>
 
             <!-- Openshift -->
@@ -1466,7 +1476,7 @@
             </dependency>
             <dependency>
                 <groupId>org.keycloak</groupId>
-                <artifactId>keycloak-server-x-dist</artifactId>
+                <artifactId>keycloak-quarkus-dist</artifactId>
                 <version>${project.version}</version>
                 <type>zip</type>
             </dependency>
@@ -1752,8 +1762,8 @@
                     <version>${nexus.staging.plugin.version}</version>
                     <extensions>true</extensions>
                     <configuration>
-                        <nexusUrl>https://repository.jboss.org/nexus</nexusUrl>
-                        <serverId>jboss-releases-repository</serverId>
+                        <serverId>${jboss.releases.repo.id}</serverId>
+                        <nexusUrl>${jboss.repo.nexusUrl}</nexusUrl>
                     </configuration>
                 </plugin>
                 <plugin>
@@ -2041,6 +2051,19 @@
         </profile>
 
         <profile>
+            <id>operator</id>
+            <activation>
+                <jdk>[11,)</jdk>
+                <property>
+                    <name>operator</name>
+                </property>
+            </activation>
+            <modules>
+                <module>operator</module>
+            </modules>
+        </profile>
+
+        <profile>
             <id>doclint-java8-disable</id>
             <activation>
                 <jdk>[1.8,)</jdk>
@@ -2068,6 +2091,37 @@
                     <plugin>
                         <groupId>org.sonatype.plugins</groupId>
                         <artifactId>nexus-staging-maven-plugin</artifactId>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>gpg</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>3.0.1</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                                <configuration>
+                                    <gpgArguments>
+                                        <arg>--batch</arg>
+                                        <arg>--pinentry-mode</arg>
+                                        <arg>loopback</arg>
+                                    </gpgArguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                        <configuration>
+                        </configuration>
                     </plugin>
                 </plugins>
             </build>
