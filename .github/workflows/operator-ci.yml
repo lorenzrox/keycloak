@@ -62,7 +62,7 @@ jobs:
         working-directory: operator
         run: |
           eval $(minikube -p minikube docker-env)
-          ./scripts/build-testing-docker-images.sh ${GITHUB_SHA} keycloak
+          ./scripts/build-testing-docker-images.sh ${GITHUB_SHA} keycloak custom-keycloak
 
       - name: Test operator running locally
         working-directory: operator
