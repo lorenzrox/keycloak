@@ -14,15 +14,16 @@ import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
 
 public class ClasspathThemeResourceProviderFactory implements ThemeResourceProviderFactory, ThemeResourceProvider {
-    public static final String THEME_RESOURCES_PROPERTIES = "theme-resources/theme-resources.properties";
-    public static final String THEME_RESOURCES_TEMPLATES = "theme-resources/templates/";
-    public static final String THEME_RESOURCES_RESOURCES = "theme-resources/resources/";
-    public static final String THEME_RESOURCES_MESSAGES = "theme-resources/messages/";
+    public static final String THEME_RESOURCES = "theme-resources";
+    public static final String THEME_RESOURCES_PROPERTIES = THEME_RESOURCES + "/theme-resources.properties";
+    public static final String THEME_RESOURCES_TEMPLATES = THEME_RESOURCES + "/templates/";
+    public static final String THEME_RESOURCES_RESOURCES = THEME_RESOURCES + "/resources/";
+    public static final String THEME_RESOURCES_MESSAGES = THEME_RESOURCES + "/messages/";
 
     private final String id;
-    private final ClassLoader classLoader;
     private final Properties properties;
-
+    protected final ClassLoader classLoader;
+ 
     public ClasspathThemeResourceProviderFactory() {
         this("classpath", Thread.currentThread().getContextClassLoader());
     }
@@ -59,7 +60,10 @@ public class ClasspathThemeResourceProviderFactory implements ThemeResourceProvi
 
     @Override
     public InputStream getResourceAsStream(String path) throws IOException {
-        final URL rootResourceURL = classLoader.getResource(THEME_RESOURCES_RESOURCES);
+        return getResourceAsStream(path, classLoader.getResource(THEME_RESOURCES_RESOURCES));
+    }
+
+    protected InputStream getResourceAsStream(String path, URL rootResourceURL) throws IOException {
         if (rootResourceURL == null) {
             return null;
         }
