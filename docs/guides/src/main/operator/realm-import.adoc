@@ -5,6 +5,7 @@
 
 <@tmpl.guide
 title="Keycloak Realm Import"
+priority=30
 summary="How to perform an automated Keyacloak Realm Import">
 
 == Keycloak Realm Import
@@ -64,7 +65,7 @@ spec:
     displayName: ExampleRealm
     enabled: true
 EOF
-kubectl|oc apply -f example-realm-import.yaml
+kubectl apply -f example-realm-import.yaml
 ----
 
 And you can check the progress of the Import by running:

@@ -4,6 +4,8 @@ set -euxo pipefail
 VERSION=$1
 DOCKER_REGISTRY=$2
 
+UUID=${3:-""}
+
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 rm -rf $SCRIPT_DIR/../olm/testing-resources
@@ -17,7 +19,7 @@ metadata:
   namespace: default
 spec:
   sourceType: grpc
-  image: $DOCKER_REGISTRY/keycloak-test-catalog:$VERSION
+  image: $DOCKER_REGISTRY/${UUID}keycloak-test-catalog:$VERSION
   displayName: Keycloak Test Catalog
   publisher: Me
   updateStrategy:
@@ -48,8 +50,4 @@ spec:
   source: test-catalog
   sourceNamespace: default
   startingCSV: keycloak-operator.v$VERSION
-  config:
-    env:
-    - name: "OPERATOR_KEYCLOAK_IMAGE"
-      value: "$DOCKER_REGISTRY/keycloak:$VERSION"
 EOF
