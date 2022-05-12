@@ -686,9 +686,6 @@ public class JpaUserProvider implements UserProvider.Streams, UserCredentialStor
                 case UserModel.EMAIL_VERIFIED:
                     restrictions.add(qb.equal(from.get("emailVerified"), Boolean.parseBoolean(value.toLowerCase())));
                     break;
-                case UserModel.ENABLED:
-                    restrictions.add(qb.equal(from.get("enabled"), Boolean.parseBoolean(value.toLowerCase())));
-                    break;
             }
         }
 
@@ -736,13 +733,10 @@ public class JpaUserProvider implements UserProvider.Streams, UserCredentialStor
                     restrictions.add(qb.like(from.get("user").get("email"), "%" + value + "%"));
                     break;
                 case UserModel.ENABLED:
-                     restrictions.add(qb.equal(from.get("enabled"), Boolean.parseBoolean(value.toLowerCase())));
-                     break;
+                    restrictions.add(qb.equal(from.get("enabled"), Boolean.parseBoolean(value.toLowerCase())));
+                    break;
                 case UserModel.EMAIL_VERIFIED:
                     restrictions.add(qb.equal(from.get("emailVerified"), Boolean.parseBoolean(value.toLowerCase())));
-                    break;
-                case UserModel.ENABLED:
-                    restrictions.add(qb.equal(from.get("enabled"), Boolean.parseBoolean(value.toLowerCase())));
                     break;
             }
         }
