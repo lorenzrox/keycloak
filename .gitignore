@@ -75,3 +75,4 @@ target
 # Quarkus ephemeral data #
 ##########################
 quarkus/data/*.db
+/.metadata/

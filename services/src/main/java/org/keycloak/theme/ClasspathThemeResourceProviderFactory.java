@@ -14,15 +14,16 @@ import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
 
 public class ClasspathThemeResourceProviderFactory implements ThemeResourceProviderFactory, ThemeResourceProvider {
-
     public static final String THEME_RESOURCES = "theme-resources";
+    public static final String THEME_RESOURCES_PROPERTIES = THEME_RESOURCES + "/theme-resources.properties";
     public static final String THEME_RESOURCES_TEMPLATES = THEME_RESOURCES + "/templates/";
     public static final String THEME_RESOURCES_RESOURCES = THEME_RESOURCES + "/resources/";
     public static final String THEME_RESOURCES_MESSAGES = THEME_RESOURCES + "/messages/";
 
     private final String id;
+    private final Properties properties;
     protected final ClassLoader classLoader;
-
+ 
     public ClasspathThemeResourceProviderFactory() {
         this("classpath", Thread.currentThread().getContextClassLoader());
     }
@@ -30,6 +31,21 @@ public class ClasspathThemeResourceProviderFactory implements ThemeResourceProvi
     public ClasspathThemeResourceProviderFactory(String id, ClassLoader classLoader) {
         this.id = id;
         this.classLoader = classLoader;
+        this.properties = new Properties();
+
+        try {
+            InputStream in = classLoader.getResourceAsStream(THEME_RESOURCES_PROPERTIES);
+            if (in != null) {
+                Charset encoding = PropertiesUtil.detectEncoding(in);
+                // detectEncoding closes the stream
+                try (Reader reader = new InputStreamReader(classLoader.getResourceAsStream(THEME_RESOURCES_PROPERTIES),
+                        encoding)) {
+                    properties.load(reader);
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to load theme resources", e);
+        }
     }
 
     @Override
@@ -64,16 +80,48 @@ public class ClasspathThemeResourceProviderFactory implements ThemeResourceProvi
     @Override
     public Properties getMessages(String baseBundlename, Locale locale) throws IOException {
         Properties m = new Properties();
-        InputStream in = classLoader.getResourceAsStream(THEME_RESOURCES_MESSAGES + baseBundlename + "_" + locale.toString() + ".properties");
-        if(in != null){
+        InputStream in = classLoader.getResourceAsStream(
+                THEME_RESOURCES_MESSAGES + baseBundlename + "_" + locale.toString() + ".properties");
+        if (in != null) {
             Charset encoding = PropertiesUtil.detectEncoding(in);
             // detectEncoding closes the stream
             try (Reader reader = new InputStreamReader(
-                        classLoader.getResourceAsStream(THEME_RESOURCES_MESSAGES + baseBundlename + "_" + locale.toString() + ".properties"), encoding)) {
+                    classLoader.getResourceAsStream(
+                            THEME_RESOURCES_MESSAGES + baseBundlename + "_" + locale.toString() + ".properties"),
+                    encoding)) {
                 m.load(reader);
             }
         }
         return m;
+    }
+
+    @Override
+    public Properties getProperties() throws IOException {
+        return properties;
+    }
+
+    @Override
+    public boolean isThemeSupported(Theme theme) {
+        String supportedThemes = properties.getProperty("supportedThemes");
+        if (supportedThemes == null) {
+            return true;
+        }
+
+        String[] values = supportedThemes.split(" ");
+        for (String value : values) {
+            String[] s = value.split("/");
+
+            Theme.Type type = Theme.Type.valueOf(s[0].toUpperCase());
+            if (type != theme.getType()) {
+                continue;
+            }
+
+            if (s.length < 2 || theme.getName().equals(s[1])) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     @Override
