@@ -1,8 +1,9 @@
 package org.keycloak.quarkus.runtime.configuration.mappers;
 
 import io.smallrye.config.ConfigSourceInterceptorContext;
+import org.keycloak.config.TransactionOptions;
 
-import java.util.Arrays;
+import static org.keycloak.quarkus.runtime.configuration.mappers.PropertyMapper.fromOption;
 
 public class TransactionPropertyMappers {
 
@@ -10,15 +11,11 @@ public class TransactionPropertyMappers {
 
     public static PropertyMapper[] getTransactionPropertyMappers() {
         return new PropertyMapper[] {
-                builder().from("transaction-xa-enabled")
+                fromOption(TransactionOptions.TRANSACTION_XA_ENABLED)
                         .to("quarkus.datasource.jdbc.transactions")
-                        .defaultValue(Boolean.TRUE.toString())
-                        .description("Manually override the transaction type. Transaction type XA and the appropriate driver is used by default.")
                         .paramLabel(Boolean.TRUE + "|" + Boolean.FALSE)
-                        .expectedValues(Arrays.asList(Boolean.TRUE.toString(), Boolean.FALSE.toString()))
-                        .isBuildTimeProperty(true)
                         .transformer(TransactionPropertyMappers::getQuarkusTransactionsValue)
-                        .build(),
+                        .build()
         };
     }
 
@@ -30,10 +27,6 @@ public class TransactionPropertyMappers {
         }
 
         return "enabled";
-    }
-
-    private static PropertyMapper.Builder builder() {
-        return PropertyMapper.builder(ConfigCategory.TRANSACTION);
     }
 
 }

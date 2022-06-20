@@ -11,7 +11,15 @@
     },
 
     "eventsStore": {
-        "provider": "${keycloak.eventsStore.provider:}"
+        "provider": "${keycloak.eventsStore.provider:jpa}",
+        "map": {
+            "storage-admin-events": {
+                "provider": "${keycloak.eventStore.map.storage.provider:concurrenthashmap}"
+            },
+            "storage-auth-events": {
+                "provider": "${keycloak.eventStore.map.storage.provider:concurrenthashmap}"
+            }
+        }
     },
 
     "deploymentState": {
@@ -103,14 +111,33 @@
         }
     },
 
+    "actionToken": {
+        "provider": "${keycloak.actionToken.provider:infinispan}",
+        "map": {
+            "storage": {
+                "provider": "${keycloak.actionToken.map.storage.provider:concurrenthashmap}"
+            }
+        }
+    },
+
+    "singleUseObject": {
+        "provider": "${keycloak.singleUseObject.provider:infinispan}",
+        "map": {
+            "storage": {
+                "provider": "${keycloak.singleUseObject.map.storage.provider:concurrenthashmap}"
+            }
+        }
+    },
+
     "mapStorage": {
         "provider": "${keycloak.mapStorage.provider:}",
         "concurrenthashmap": {
             "dir": "${project.build.directory:target/map}",
+            "keyType.single-use-objects": "string",
             "keyType.realms": "string",
             "keyType.authz-resource-servers": "string"
         },
-        "jpa-map-storage": {
+        "jpa": {
             "url": "${keycloak.map.storage.connectionsJpa.url:}",
             "user": "${keycloak.map.storage.connectionsJpa.user:}",
             "password": "${keycloak.map.storage.connectionsJpa.password:}",

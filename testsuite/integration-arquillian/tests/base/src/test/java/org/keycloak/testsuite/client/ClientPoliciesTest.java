@@ -118,6 +118,7 @@ import org.keycloak.testsuite.arquillian.annotation.EnableFeature;
 import org.keycloak.testsuite.client.resources.TestApplicationResourceUrls;
 import org.keycloak.testsuite.client.resources.TestOIDCEndpointsApplicationResource;
 import org.keycloak.testsuite.pages.ErrorPage;
+import org.keycloak.testsuite.pages.LogoutConfirmPage;
 import org.keycloak.testsuite.pages.OAuth2DeviceVerificationPage;
 import org.keycloak.testsuite.pages.OAuthGrantPage;
 import org.keycloak.testsuite.rest.resource.TestingOIDCEndpointsApplicationResource.AuthorizationEndpointRequestObject;
@@ -196,6 +197,9 @@ public class ClientPoliciesTest extends AbstractClientPoliciesTest {
 
     @Page
     protected ErrorPage errorPage;
+
+    @Page
+    protected LogoutConfirmPage logoutConfirmPage;
 
     @Override
     public void addTestRealms(List<RealmRepresentation> testRealms) {
@@ -1049,6 +1053,66 @@ public class ClientPoliciesTest extends AbstractClientPoliciesTest {
 
         successfulLoginAndLogout(clientBetaId, null);
         failLoginWithoutNonce(clientAlphaId);
+
+        // update profiles
+        json = (new ClientProfilesBuilder()).addProfile(
+                (new ClientProfileBuilder()).createProfile(PROFILE_NAME, "El Primer Perfil")
+                        .addExecutor(PKCEEnforcerExecutorFactory.PROVIDER_ID,
+                                createPKCEEnforceExecutorConfig(Boolean.FALSE)) // check only
+                        .toRepresentation()
+        ).toString();
+        updateProfiles(json);
+
+        // Attempt to create a confidential client without PKCE setting. Should fail
+        try {
+            createClientByAdmin(generateSuffixedName("Gamma-App"), (ClientRepresentation clientRep) -> {
+                clientRep.setSecret("secretGamma");
+                clientRep.setBearerOnly(Boolean.FALSE);
+                clientRep.setPublicClient(Boolean.FALSE);
+            });
+            fail();
+        } catch (ClientPolicyException e) {
+            assertEquals(OAuthErrorException.INVALID_CLIENT_METADATA, e.getMessage());
+            assertEquals("Invalid client metadata: code_challenge_method", e.getErrorDetail());
+        }
+
+        json = (new ClientProfilesBuilder()).addProfile(
+                (new ClientProfileBuilder()).createProfile(PROFILE_NAME, "El Primer Perfil")
+                        .addExecutor(PKCEEnforcerExecutorFactory.PROVIDER_ID,
+                                createPKCEEnforceExecutorConfig(Boolean.TRUE)) // enforce
+                        .toRepresentation()
+        ).toString();
+        updateProfiles(json);
+
+        authCreateClients();
+        String clientGammaId = createClientDynamically(generateSuffixedName("Gamma-App"), (OIDCClientRepresentation clientRep) -> {
+            clientRep.setClientSecret("secretGamma");
+        });
+
+        ClientRepresentation clientRep = getClientByAdmin(clientGammaId);
+        assertEquals(OAuth2Constants.PKCE_METHOD_S256, OIDCAdvancedConfigWrapper.fromClientRepresentation(clientRep).getPkceCodeChallengeMethod());
+
+        json = (new ClientProfilesBuilder()).addProfile(
+                (new ClientProfileBuilder()).createProfile(PROFILE_NAME, "El Primer Perfil")
+                        .addExecutor(PKCEEnforcerExecutorFactory.PROVIDER_ID,
+                                createPKCEEnforceExecutorConfig(Boolean.FALSE)) // check only
+                        .toRepresentation()
+        ).toString();
+        updateProfiles(json);
+
+        // Attempt to update the confidential client with not allowed PKCE setting. Should fail
+        try {
+            updateClientByAdmin(clientGammaId, (ClientRepresentation updatingClientRep) -> {
+                updatingClientRep.setAttributes(new HashMap<>());
+                updatingClientRep.getAttributes().put(OIDCConfigAttributes.PKCE_CODE_CHALLENGE_METHOD, OAuth2Constants.PKCE_METHOD_PLAIN);
+            });
+        } catch (ClientPolicyException e) {
+            assertEquals(OAuthErrorException.INVALID_CLIENT_METADATA, e.getMessage());
+            assertEquals("Invalid client metadata: code_challenge_method", e.getErrorDetail());
+        }
+        ClientRepresentation cRep = getClientByAdmin(clientGammaId);
+        assertEquals(OAuth2Constants.PKCE_METHOD_S256, cRep.getAttributes().get(OIDCConfigAttributes.PKCE_CODE_CHALLENGE_METHOD));
+
     }
 
     @Test
@@ -2939,7 +3003,6 @@ public class ClientPoliciesTest extends AbstractClientPoliciesTest {
         } catch (IOException ioe) {
             throw new RuntimeException(ioe);
         }
-        String idTokenHint = accessTokenResponse.getIdToken();
         assertEquals(200, accessTokenResponse.getStatusCode());
 
         // Check token refresh.
@@ -2996,7 +3059,9 @@ public class ClientPoliciesTest extends AbstractClientPoliciesTest {
         assertEquals(OAuthErrorException.INVALID_GRANT, accessTokenResponse.getError());
 
         // Check frontchannel logout and login.
-        oauth.idTokenHint(idTokenHint).openLogout();
+        driver.navigate().to(oauth.getLogoutUrl().build());
+        logoutConfirmPage.assertCurrent();
+        logoutConfirmPage.confirmLogout();
         loginResponse = oauth.doLogin(TEST_USER_NAME, TEST_USER_PASSWORD);
         Assert.assertNull(loginResponse.getError());
 

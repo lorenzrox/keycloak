@@ -20,7 +20,6 @@ package org.keycloak.models.map.events;
 import org.keycloak.events.Event;
 import org.keycloak.events.admin.AdminEvent;
 import org.keycloak.events.admin.AuthDetails;
-import org.keycloak.models.KeycloakSession;
 
 import java.util.Collections;
 import java.util.Map;
@@ -29,7 +28,7 @@ public class EventUtils {
     public static Event entityToModel(MapAuthEventEntity eventEntity) {
         Event event = new Event();
         event.setId(eventEntity.getId());
-        event.setTime(eventEntity.getTime());
+        event.setTime(eventEntity.getTimestamp());
         event.setType(eventEntity.getType());
         event.setRealmId(eventEntity.getRealmId());
         event.setClientId(eventEntity.getClientId());
@@ -47,7 +46,7 @@ public class EventUtils {
     public static AdminEvent entityToModel(MapAdminEventEntity adminEventEntity) {
         AdminEvent adminEvent = new AdminEvent();
         adminEvent.setId(adminEventEntity.getId());
-        adminEvent.setTime(adminEventEntity.getTime());
+        adminEvent.setTime(adminEventEntity.getTimestamp());
         adminEvent.setRealmId(adminEventEntity.getRealmId());
         setAuthDetails(adminEvent, adminEventEntity);
         adminEvent.setOperationType(adminEventEntity.getOperationType());
@@ -65,7 +64,7 @@ public class EventUtils {
     public static MapAdminEventEntity modelToEntity(AdminEvent adminEvent, boolean includeRepresentation) {
         MapAdminEventEntity mapAdminEvent = new MapAdminEventEntityImpl();
         mapAdminEvent.setId(adminEvent.getId());
-        mapAdminEvent.setTime(adminEvent.getTime());
+        mapAdminEvent.setTimestamp(adminEvent.getTime());
         mapAdminEvent.setRealmId(adminEvent.getRealmId());
         setAuthDetails(mapAdminEvent, adminEvent.getAuthDetails());
         mapAdminEvent.setOperationType(adminEvent.getOperationType());
@@ -82,7 +81,7 @@ public class EventUtils {
     public static MapAuthEventEntity modelToEntity(Event event) {
         MapAuthEventEntity eventEntity = new MapAuthEventEntityImpl();
         eventEntity.setId(event.getId());
-        eventEntity.setTime(event.getTime());
+        eventEntity.setTimestamp(event.getTime());
         eventEntity.setType(event.getType());
         eventEntity.setRealmId(event.getRealmId());
         eventEntity.setClientId(event.getClientId());

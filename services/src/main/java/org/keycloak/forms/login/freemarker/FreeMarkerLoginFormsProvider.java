@@ -92,6 +92,7 @@ import org.keycloak.theme.beans.MessagesPerFieldBean;
 import org.keycloak.userprofile.UserProfileContext;
 import org.keycloak.userprofile.UserProfileProvider;
 import org.keycloak.utils.MediaType;
+import org.keycloak.utils.StringUtil;
 
 /**
  * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
@@ -368,6 +369,10 @@ public class FreeMarkerLoginFormsProvider implements LoginFormsProvider {
     protected Properties handleThemeResources(Theme theme, Locale locale) {
         Properties messagesBundle = new Properties();
         try {
+            if(!StringUtil.isNotBlank(realm.getDefaultLocale()))
+            {
+                messagesBundle.putAll(realm.getRealmLocalizationTextsByLocale(realm.getDefaultLocale()));
+            }
             messagesBundle.putAll(theme.getMessages(locale));
             messagesBundle.putAll(realm.getRealmLocalizationTextsByLocale(locale.toLanguageTag()));
             attributes.put("msg", new MessageFormatterMethod(locale, messagesBundle));
@@ -493,6 +498,9 @@ public class FreeMarkerLoginFormsProvider implements LoginFormsProvider {
                             break;
                         case REGISTER:
                             b = UriBuilder.fromUri(Urls.realmRegisterPage(baseUri, realm.getName()));
+                            break;
+                        case LOGOUT_CONFIRM:
+                            b = UriBuilder.fromUri(Urls.logoutConfirm(baseUri, realm.getName()));
                             break;
                         default:
                             b = UriBuilder.fromUri(baseUri).path(uriInfo.getPath());

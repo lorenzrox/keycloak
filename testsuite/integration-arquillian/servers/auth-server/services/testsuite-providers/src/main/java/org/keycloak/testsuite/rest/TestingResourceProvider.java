@@ -114,6 +114,7 @@ import java.util.Properties;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.UUID;
+import org.keycloak.services.ErrorResponse;
 
 /**
  * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
@@ -302,6 +303,8 @@ public class TestingResourceProvider implements RealmResourceProvider {
         EventStoreProvider eventStore = session.getProvider(EventStoreProvider.class);
         RealmModel realm = session.realms().getRealm(realmId);
 
+        if (realm == null) return ErrorResponse.error("Realm not found", Response.Status.NOT_FOUND);
+
         eventStore.clear(realm);
         return Response.noContent().build();
     }
@@ -427,6 +430,8 @@ public class TestingResourceProvider implements RealmResourceProvider {
         EventStoreProvider eventStore = session.getProvider(EventStoreProvider.class);
         RealmModel realm = session.realms().getRealm(realmId);
 
+        if (realm == null) return ErrorResponse.error("Realm not found", Response.Status.NOT_FOUND);
+
         eventStore.clearAdmin(realm);
         return Response.noContent().build();
     }
@@ -437,6 +442,9 @@ public class TestingResourceProvider implements RealmResourceProvider {
     public Response clearAdminEventStore(@QueryParam("realmId") String realmId, @QueryParam("olderThan") long olderThan) {
         EventStoreProvider eventStore = session.getProvider(EventStoreProvider.class);
         RealmModel realm = session.realms().getRealm(realmId);
+
+        if (realm == null) return ErrorResponse.error("Realm not found", Response.Status.NOT_FOUND);
+
         eventStore.clearAdmin(realm, olderThan);
         return Response.noContent().build();
     }
@@ -992,7 +1000,7 @@ public class TestingResourceProvider implements RealmResourceProvider {
      * See URLUtils.sendPOSTWithWebDriver for more details
      *
      * @param postRequestUrl Absolute URL. It can include query parameters etc. The POST request will be send to this URL
-     * @param encodedFormParameters Encoded parameters in the form of "param1=value1:param2=value2"
+     * @param encodedFormParameters Encoded parameters in the form of "param1=value1&param2=value2"
      * @return
      */
     @GET
