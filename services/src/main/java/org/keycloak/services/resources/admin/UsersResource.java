@@ -448,10 +448,8 @@ public class UsersResource {
         return resource;
     }
 
-    private Stream<UserRepresentation> searchForUser(Map<String, String> attributes, RealmModel realm,
-            UserPermissionEvaluator usersEvaluator, Boolean briefRepresentation, Integer firstResult,
-            Integer maxResults, Boolean includeServiceAccounts) {
-        session.setAttribute(UserModel.INCLUDE_SERVICE_ACCOUNT, includeServiceAccounts);
+    private Stream<UserRepresentation> searchForUser(Map<String, String> attributes, RealmModel realm, UserPermissionEvaluator usersEvaluator, Boolean briefRepresentation, Integer firstResult, Integer maxResults, Boolean includeServiceAccounts) {
+        attributes.put(UserModel.INCLUDE_SERVICE_ACCOUNT, includeServiceAccounts.toString());
 
         if (!auth.users().canView()) {
             Set<String> groupModels = auth.groups().getGroupsWithViewPermission();
