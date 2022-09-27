@@ -990,6 +990,14 @@ public class IdentityBrokerService implements IdentityProvider.AuthenticationCal
 
         if (context.getIdpConfig().getSyncMode() == IdentityProviderSyncMode.FORCE) {
             setBasicUserAttributes(context, federatedUser);
+
+            if (!Objects.equals(context.getUsername(), federatedIdentityModel.getUserName())) {
+                federatedIdentityModel = new FederatedIdentityModel(federatedIdentityModel.getIdentityProvider(),
+                        federatedIdentityModel.getUserId(), context.getUsername(),
+                        federatedIdentityModel.getToken());
+
+                this.session.users().updateFederatedIdentity(this.realmModel, federatedUser, federatedIdentityModel);
+            }
         }
 
         // Skip DB write if tokens are null or equal
@@ -1040,7 +1048,7 @@ public class IdentityBrokerService implements IdentityProvider.AuthenticationCal
 
     @Override
     public AuthenticationSessionModel getAndVerifyAuthenticationSession(String encodedCode) {
-        IdentityBrokerState state = IdentityBrokerState.encoded(encodedCode);
+        IdentityBrokerState state = IdentityBrokerState.encoded(encodedCode, realmModel);
         String code = state.getDecodedState();
         String clientId = state.getClientId();
         String tabId = state.getTabId();
@@ -1131,7 +1139,7 @@ public class IdentityBrokerService implements IdentityProvider.AuthenticationCal
         if (clientSessionCode != null) {
             authSession = clientSessionCode.getClientSession();
             String relayState = clientSessionCode.getOrGenerateCode();
-            encodedState = IdentityBrokerState.decoded(relayState, authSession.getClient().getClientId(), authSession.getTabId());
+            encodedState = IdentityBrokerState.decoded(relayState, authSession.getClient().getId(), authSession.getClient().getClientId(), authSession.getTabId());
         }
 
         return new AuthenticationRequest(this.session, this.realmModel, authSession, this.request, this.session.getContext().getUri(), encodedState, getRedirectUri(providerId));
