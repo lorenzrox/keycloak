@@ -29,6 +29,7 @@ import org.keycloak.authentication.RequiredActionFactory;
 import org.keycloak.authentication.RequiredActionProvider;
 import org.keycloak.authentication.actiontoken.ActionTokenContext;
 import org.keycloak.authentication.actiontoken.ActionTokenHandler;
+import org.keycloak.common.util.Resteasy;
 import org.keycloak.models.DefaultActionTokenKey;
 import org.keycloak.authentication.actiontoken.ExplainedTokenVerificationException;
 import org.keycloak.authentication.actiontoken.resetcred.ResetCredentialsActionTokenHandler;
@@ -91,7 +92,6 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
@@ -99,7 +99,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriBuilderException;
 import javax.ws.rs.core.UriInfo;
-import javax.ws.rs.ext.Providers;
 import java.net.URI;
 import java.util.Map;
 
@@ -128,22 +127,15 @@ public class LoginActionsService {
     
     public static final String CANCEL_AIA = "cancel-aia";
 
-    private RealmModel realm;
+    private final RealmModel realm;
 
-    @Context
-    private HttpRequest request;
+    private final HttpRequest request;
 
-    @Context
-    protected HttpHeaders headers;
+    protected final HttpHeaders headers;
 
-    @Context
-    private ClientConnection clientConnection;
+    private final ClientConnection clientConnection;
 
-    @Context
-    protected Providers providers;
-
-    @Context
-    protected KeycloakSession session;
+    protected final KeycloakSession session;
 
     private EventBuilder event;
 
@@ -180,10 +172,14 @@ public class LoginActionsService {
         return baseUriBuilder.path(RealmsResource.class).path(RealmsResource.class, "getLoginActionsService");
     }
 
-    public LoginActionsService(RealmModel realm, EventBuilder event) {
-        this.realm = realm;
+    public LoginActionsService(KeycloakSession session, EventBuilder event) {
+        this.session = session;
+        this.clientConnection = session.getContext().getConnection();
+        this.realm = session.getContext().getRealm();
         this.event = event;
         CacheControlUtil.noBackButtonCacheControlHeader();
+        this.request = session.getContext().getContextObject(HttpRequest.class);
+        this.headers = session.getContext().getRequestHeaders();
     }
 
     private boolean checkSsl() {

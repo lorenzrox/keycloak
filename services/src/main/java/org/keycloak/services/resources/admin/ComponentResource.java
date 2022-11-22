@@ -52,7 +52,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -72,25 +71,25 @@ import java.util.stream.Stream;
 public class ComponentResource {
     protected static final Logger logger = Logger.getLogger(ComponentResource.class);
 
-    protected RealmModel realm;
+    protected final RealmModel realm;
 
-    private AdminPermissionEvaluator auth;
+    private final AdminPermissionEvaluator auth;
 
-    private AdminEventBuilder adminEvent;
+    private final AdminEventBuilder adminEvent;
 
-    @Context
-    protected ClientConnection clientConnection;
+    protected final ClientConnection clientConnection;
 
-    @Context
-    protected KeycloakSession session;
+    protected final KeycloakSession session;
 
-    @Context
-    protected HttpHeaders headers;
+    protected final HttpHeaders headers;
 
-    public ComponentResource(RealmModel realm, AdminPermissionEvaluator auth, AdminEventBuilder adminEvent) {
+    public ComponentResource(KeycloakSession session, AdminPermissionEvaluator auth, AdminEventBuilder adminEvent) {
+        this.session = session;
         this.auth = auth;
-        this.realm = realm;
+        this.realm = session.getContext().getRealm();
         this.adminEvent = adminEvent.resource(ResourceType.COMPONENT);
+        this.clientConnection = session.getContext().getConnection();
+        this.headers = session.getContext().getRequestHeaders();
     }
 
     @GET

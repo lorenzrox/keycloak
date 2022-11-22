@@ -69,7 +69,6 @@ import javax.crypto.spec.SecretKeySpec;
 import javax.ws.rs.GET;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
@@ -451,28 +450,28 @@ public abstract class AbstractOAuth2IdentityProvider<C extends OAuth2IdentityPro
     }
 
     protected static class Endpoint {
-        protected AuthenticationCallback callback;
-        protected RealmModel realm;
-        protected EventBuilder event;
-        private AbstractOAuth2IdentityProvider provider;
+        protected final AuthenticationCallback callback;
+        protected final RealmModel realm;
+        protected final EventBuilder event;
+        private final AbstractOAuth2IdentityProvider provider;
 
-        @Context
-        protected KeycloakSession session;
+        protected final KeycloakSession session;
 
-        @Context
-        protected ClientConnection clientConnection;
+        protected final ClientConnection clientConnection;
 
-        @Context
-        protected HttpHeaders headers;
+        protected final HttpHeaders headers;
 
-        @Context
-        protected HttpRequest httpRequest;
+        protected final HttpRequest httpRequest;
 
         public Endpoint(AuthenticationCallback callback, RealmModel realm, EventBuilder event, AbstractOAuth2IdentityProvider provider) {
             this.callback = callback;
             this.realm = realm;
             this.event = event;
             this.provider = provider;
+            this.session = provider.session;
+            this.clientConnection = session.getContext().getConnection();
+            this.httpRequest = session.getContext().getContextObject(HttpRequest.class);
+            this.headers = session.getContext().getRequestHeaders();
         }
 
         @GET

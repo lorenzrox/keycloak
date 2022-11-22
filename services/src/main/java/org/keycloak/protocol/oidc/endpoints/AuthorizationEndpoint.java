@@ -18,7 +18,6 @@
 package org.keycloak.protocol.oidc.endpoints;
 
 import org.jboss.logging.Logger;
-import org.jboss.resteasy.spi.ResteasyProviderFactory;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.authentication.AuthenticationProcessor;
 import org.keycloak.constants.AdapterConstants;
@@ -30,7 +29,7 @@ import org.keycloak.locale.LocaleSelectorProvider;
 import org.keycloak.models.AuthenticationFlowModel;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.Constants;
-import org.keycloak.models.RealmModel;
+import org.keycloak.models.KeycloakSession;
 import org.keycloak.protocol.AuthorizationEndpointBase;
 import org.keycloak.protocol.oidc.OIDCLoginProtocol;
 import org.keycloak.protocol.oidc.endpoints.request.AuthorizationEndpointRequest;
@@ -58,8 +57,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.List;
 import java.util.Map;
 
@@ -94,8 +91,8 @@ public class AuthorizationEndpoint extends AuthorizationEndpointBase {
     private AuthorizationEndpointRequest request;
     private String redirectUri;
 
-    public AuthorizationEndpoint(RealmModel realm, EventBuilder event) {
-        super(realm, event);
+    public AuthorizationEndpoint(KeycloakSession session, EventBuilder event) {
+        super(session, event);
         event.event(EventType.LOGIN);
     }
 
@@ -117,9 +114,7 @@ public class AuthorizationEndpoint extends AuthorizationEndpointBase {
      */
     @Path("device")
     public Object authorizeDevice() {
-        DeviceEndpoint endpoint = new DeviceEndpoint(realm, event);
-        ResteasyProviderFactory.getInstance().injectProperties(endpoint);
-        return endpoint;
+        return new DeviceEndpoint(session, event);
     }
 
     private Response process(MultivaluedMap<String, String> params) {

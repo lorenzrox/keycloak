@@ -18,7 +18,6 @@ package org.keycloak.services.resources.admin;
 
 import org.jboss.logging.Logger;
 import org.jboss.resteasy.annotations.cache.NoCache;
-import org.jboss.resteasy.spi.ResteasyProviderFactory;
 import org.keycloak.common.ClientConnection;
 import org.keycloak.common.Profile;
 import org.keycloak.common.util.ObjectUtil;
@@ -80,25 +79,25 @@ public class UsersResource {
     private static final Logger logger = Logger.getLogger(UsersResource.class);
     private static final String SEARCH_ID_PARAMETER = "id:";
 
-    protected RealmModel realm;
+    protected final RealmModel realm;
 
-    private AdminPermissionEvaluator auth;
+    private final AdminPermissionEvaluator auth;
 
-    private AdminEventBuilder adminEvent;
+    private final AdminEventBuilder adminEvent;
 
-    @Context
-    protected ClientConnection clientConnection;
+    protected final ClientConnection clientConnection;
 
-    @Context
-    protected KeycloakSession session;
+    protected final KeycloakSession session;
 
-    @Context
-    protected HttpHeaders headers;
+    protected final HttpHeaders headers;
 
-    public UsersResource(RealmModel realm, AdminPermissionEvaluator auth, AdminEventBuilder adminEvent) {
+    public UsersResource(KeycloakSession session, AdminPermissionEvaluator auth, AdminEventBuilder adminEvent) {
+        this.session = session;
+        this.clientConnection = session.getContext().getConnection();
         this.auth = auth;
-        this.realm = realm;
+        this.realm = session.getContext().getRealm();
         this.adminEvent = adminEvent.resource(ResourceType.USER);
+        this.headers = session.getContext().getRequestHeaders();
     }
 
     /**
@@ -232,10 +231,8 @@ public class UsersResource {
                 throw new ForbiddenException();
             }
         }
-        UserResource resource = new UserResource(realm, user, auth, adminEvent);
-        ResteasyProviderFactory.getInstance().injectProperties(resource);
-        // resourceContext.initResource(users);
-        return resource;
+
+        return new UserResource(session, user, auth, adminEvent);
     }
 
     /**
@@ -443,9 +440,7 @@ public class UsersResource {
      */
     @Path("profile")
     public UserProfileResource userProfile() {
-        UserProfileResource resource = new UserProfileResource(realm, auth);
-        ResteasyProviderFactory.getInstance().injectProperties(resource);
-        return resource;
+        return new UserProfileResource(session, auth);
     }
 
     private Stream<UserRepresentation> searchForUser(Map<String, String> attributes, RealmModel realm, UserPermissionEvaluator usersEvaluator, Boolean briefRepresentation, Integer firstResult, Integer maxResults, Boolean includeServiceAccounts) {

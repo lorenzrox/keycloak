@@ -18,7 +18,6 @@
 package org.keycloak.protocol.oidc;
 
 import org.jboss.logging.Logger;
-import org.jboss.resteasy.spi.ResteasyProviderFactory;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.OAuthErrorException;
 import org.keycloak.broker.provider.BrokeredIdentityContext;
@@ -422,8 +421,7 @@ public class DefaultTokenExchangeProvider implements TokenExchangeProvider {
         // Create authSession with target SAML 2.0 client and authenticated user
         LoginProtocolFactory factory = (LoginProtocolFactory) session.getKeycloakSessionFactory()
                 .getProviderFactory(LoginProtocol.class, SamlProtocol.LOGIN_PROTOCOL);
-        SamlService samlService = (SamlService) factory.createProtocolEndpoint(realm, event);
-        ResteasyProviderFactory.getInstance().injectProperties(samlService);
+        SamlService samlService = (SamlService) factory.createProtocolEndpoint(session, event);
         AuthenticationSessionModel authSession = samlService.getOrCreateLoginSessionForIdpInitiatedSso(session, realm,
                 targetClient, null);
         if (authSession == null) {

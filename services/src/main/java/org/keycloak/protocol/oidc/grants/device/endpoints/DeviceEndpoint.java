@@ -46,7 +46,6 @@ import org.keycloak.protocol.oidc.grants.device.clientpolicy.context.DeviceAutho
 import org.keycloak.protocol.oidc.utils.AuthorizeClientUtil;
 import org.keycloak.representations.OAuth2DeviceAuthorizationResponse;
 import org.keycloak.saml.common.util.StringUtil;
-import org.keycloak.services.ErrorPageException;
 import org.keycloak.services.ErrorResponseException;
 import org.keycloak.services.ServicesLogger;
 import org.keycloak.services.Urls;
@@ -66,7 +65,6 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
@@ -82,13 +80,13 @@ public class DeviceEndpoint extends AuthorizationEndpointBase implements RealmRe
 
     protected static final Logger logger = Logger.getLogger(DeviceEndpoint.class);
 
-    @Context
-    private HttpRequest request;
+    private final HttpRequest request;
 
     private Cors cors;
 
-    public DeviceEndpoint(RealmModel realm, EventBuilder event) {
-        super(realm, event);
+    public DeviceEndpoint(KeycloakSession session, EventBuilder event) {
+        super(session, event);
+        this.request = session.getContext().getContextObject(HttpRequest.class);
     }
 
     /**

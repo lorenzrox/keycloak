@@ -11,6 +11,7 @@ on:
 
 env:
   DEFAULT_JDK_VERSION: 11
+  MAVEN_OPTS: -Dhttp.keepAlive=false -Dmaven.wagon.http.pool=false -Dmaven.wagon.http.retryHandler.class=standard -Dmaven.wagon.http.retryHandler.count=3 -Dmaven.wagon.httpconnectionManager.ttlSeconds=120
 
 concurrency:
   # Only run once for latest commit per ref and cancel other (previous) runs.
@@ -197,7 +198,7 @@ jobs:
     name: Base testsuite
     needs: build
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 100
     strategy:
       matrix:
         server: ['quarkus', 'quarkus-map', 'quarkus-map-hot-rod', 'quarkus-map-jpa']

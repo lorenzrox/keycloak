@@ -52,10 +52,7 @@ import javax.ws.rs.OPTIONS;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.Providers;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -74,25 +71,22 @@ import java.util.stream.Collectors;
 public class AdminConsole {
     protected static final Logger logger = Logger.getLogger(AdminConsole.class);
 
-    @Context
-    protected ClientConnection clientConnection;
+    protected final ClientConnection clientConnection;
 
-    @Context
-    protected HttpRequest request;
+    protected final HttpRequest request;
 
-    @Context
-    protected HttpResponse response;
+    protected final HttpResponse response;
 
-    @Context
-    protected KeycloakSession session;
+    protected final KeycloakSession session;
 
-    @Context
-    protected Providers providers;
+    protected final RealmModel realm;
 
-    protected RealmModel realm;
-
-    public AdminConsole(RealmModel realm) {
-        this.realm = realm;
+    public AdminConsole(KeycloakSession session) {
+        this.session = session;
+        this.realm = session.getContext().getRealm();
+        this.clientConnection = session.getContext().getConnection();
+        this.request = session.getContext().getContextObject(HttpRequest.class);
+        this.response = session.getContext().getContextObject(HttpResponse.class);
     }
 
     public static class WhoAmI {
@@ -204,12 +198,12 @@ public class AdminConsole {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @NoCache
-    public Response whoAmI(final @Context HttpHeaders headers) {
+    public Response whoAmI() {
         RealmManager realmManager = new RealmManager(session);
         AuthenticationManager.AuthResult authResult = new AppAuthManager.BearerTokenAuthenticator(session)
                 .setRealm(realm)
                 .setConnection(clientConnection)
-                .setHeaders(headers)
+                .setHeaders(session.getContext().getRequestHeaders())
                 .authenticate();
 
         if (authResult == null) {

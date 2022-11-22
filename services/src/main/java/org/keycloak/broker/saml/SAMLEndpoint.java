@@ -20,7 +20,6 @@ package org.keycloak.broker.saml;
 import org.jboss.logging.Logger;
 import org.jboss.resteasy.annotations.cache.NoCache;
 
-import org.jboss.resteasy.spi.ResteasyProviderFactory;
 import org.keycloak.broker.provider.BrokeredIdentityContext;
 import org.keycloak.broker.provider.IdentityBrokerException;
 import org.keycloak.broker.provider.IdentityProvider;
@@ -81,7 +80,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -137,29 +135,29 @@ public class SAMLEndpoint {
     public static final String SAML_LOGIN_RESPONSE = "SAML_LOGIN_RESPONSE";
     public static final String SAML_ASSERTION = "SAML_ASSERTION";
     public static final String SAML_AUTHN_STATEMENT = "SAML_AUTHN_STATEMENT";
-    protected RealmModel realm;
+    protected final RealmModel realm;
     protected EventBuilder event;
-    protected SAMLIdentityProviderConfig config;
-    protected IdentityProvider.AuthenticationCallback callback;
-    protected SAMLIdentityProvider provider;
+    protected final SAMLIdentityProviderConfig config;
+    protected final IdentityProvider.AuthenticationCallback callback;
+    protected final SAMLIdentityProvider provider;
     private final DestinationValidator destinationValidator;
 
-    @Context
-    private KeycloakSession session;
+    private final KeycloakSession session;
 
-    @Context
-    private ClientConnection clientConnection;
+    private final ClientConnection clientConnection;
 
-    @Context
-    private HttpHeaders headers;
+    private final HttpHeaders headers;
 
 
-    public SAMLEndpoint(RealmModel realm, SAMLIdentityProvider provider, SAMLIdentityProviderConfig config, IdentityProvider.AuthenticationCallback callback, DestinationValidator destinationValidator) {
-        this.realm = realm;
+    public SAMLEndpoint(KeycloakSession session, SAMLIdentityProvider provider, SAMLIdentityProviderConfig config, IdentityProvider.AuthenticationCallback callback, DestinationValidator destinationValidator) {
+        this.realm = session.getContext().getRealm();
         this.config = config;
         this.callback = callback;
         this.provider = provider;
         this.destinationValidator = destinationValidator;
+        this.session = session;
+        this.clientConnection = session.getContext().getConnection();
+        this.headers = session.getContext().getRequestHeaders();
     }
 
     @GET
@@ -598,8 +596,7 @@ public class SAMLEndpoint {
             }
 
             LoginProtocolFactory factory = (LoginProtocolFactory) session.getKeycloakSessionFactory().getProviderFactory(LoginProtocol.class, SamlProtocol.LOGIN_PROTOCOL);
-            SamlService samlService = (SamlService) factory.createProtocolEndpoint(SAMLEndpoint.this.realm, event);
-            ResteasyProviderFactory.getInstance().injectProperties(samlService);
+            SamlService samlService = (SamlService) factory.createProtocolEndpoint(SAMLEndpoint.this.session, event);
             AuthenticationSessionModel authSession = samlService.getOrCreateLoginSessionForIdpInitiatedSso(session, SAMLEndpoint.this.realm, oClient.get(), null);
             if (authSession == null) {
                 event.error(Errors.INVALID_REDIRECT_URI);
