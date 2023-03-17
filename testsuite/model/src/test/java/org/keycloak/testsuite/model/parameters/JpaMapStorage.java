@@ -54,6 +54,8 @@ import org.keycloak.testsuite.model.KeycloakModelParameters;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
+import static org.keycloak.testsuite.model.transaction.StorageTransactionTest.LOCK_TIMEOUT_SYSTEM_PROPERTY;
+
 public class JpaMapStorage extends KeycloakModelParameters {
 
     private static final Logger LOG = Logger.getLogger(JpaMapStorage.class.getName());
@@ -95,7 +97,8 @@ public class JpaMapStorage extends KeycloakModelParameters {
                 .config("user", POSTGRES_DB_USER)
                 .config("password", POSTGRES_DB_PASSWORD)
                 .config("driver", "org.postgresql.Driver")
-                .config("driverDialect", "org.keycloak.models.map.storage.jpa.hibernate.dialect.JsonbPostgreSQL95Dialect");
+                .config("driverDialect", "org.keycloak.models.map.storage.jpa.hibernate.dialect.JsonbPostgreSQL95Dialect")
+                .config("lockTimeout", "${" + LOCK_TIMEOUT_SYSTEM_PROPERTY + ":}");
 
         cf.spi(AuthenticationSessionSpi.PROVIDER_ID).provider(MapRootAuthenticationSessionProviderFactory.PROVIDER_ID)  .config(STORAGE_CONFIG, JpaMapStorageProviderFactory.PROVIDER_ID)
           .spi("client").provider(MapClientProviderFactory.PROVIDER_ID)                                                 .config(STORAGE_CONFIG, JpaMapStorageProviderFactory.PROVIDER_ID)

@@ -56,6 +56,8 @@ import org.testcontainers.utility.DockerImageName;
 
 import java.util.Set;
 
+import static org.keycloak.testsuite.model.transaction.StorageTransactionTest.LOCK_TIMEOUT_SYSTEM_PROPERTY;
+
 public class JpaMapStorageCockroachdb extends KeycloakModelParameters {
 
     private static final Logger LOG = Logger.getLogger(JpaMapStorageCockroachdb.class.getName());
@@ -96,7 +98,8 @@ public class JpaMapStorageCockroachdb extends KeycloakModelParameters {
                 .config("user", COCKROACHDB_DB_USER)
                 .config("password", COCKROACHDB_DB_PASSWORD)
                 .config("driver", "org.postgresql.Driver")
-                .config("driverDialect", "org.keycloak.models.map.storage.jpa.hibernate.dialect.JsonbPostgreSQL95Dialect");
+                .config("driverDialect", "org.keycloak.models.map.storage.jpa.hibernate.dialect.JsonbPostgreSQL95Dialect")
+                .config("lockTimeout", "${" + LOCK_TIMEOUT_SYSTEM_PROPERTY + ":}");
 
         cf.spi(AuthenticationSessionSpi.PROVIDER_ID).provider(MapRootAuthenticationSessionProviderFactory.PROVIDER_ID)  .config(STORAGE_CONFIG, JpaMapStorageProviderFactory.PROVIDER_ID)
           .spi("client").provider(MapClientProviderFactory.PROVIDER_ID)                                                 .config(STORAGE_CONFIG, JpaMapStorageProviderFactory.PROVIDER_ID)
